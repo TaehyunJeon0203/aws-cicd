@@ -20,22 +20,23 @@ jobs:
     steps:
       # GitHub에서 제공하는 액션을 사용하여 체크아웃
       # 현재 github상에(원격 저장소)저장된 최신 코드를 가져옴
-      - name: Repoitory Checkout code, 소스 가져오기 
-        uses: actions/checkout@v4
+        - name: Repoitory Checkout code, 소스 가져오기 
+          uses: actions/checkout@v4
 
-      # pem 파일을 base64 인코딩하여 해당 문자열을 github secret 변수에 저장
-      # ec2 서버의 host, user 정보도 github secret 변수에 저장
-      # 맥 : base64 -i ~/.ssh/your_key.pem -o a.txt
-      # 윈도우(PS) : certutil -encode your_key.pem a.txt
-      # 윈도우(PS) : [Convert]::Base64Encode([System.IO.File]::ReadAllBytes("your_key.pem")) > a.txt
-      # pem 파일은 깃허브상 리눅스에 파일 생성 => ec2 접속을 위해
-      # 키값을 디코딩하여 리눅스상 현재 위치에 생성, 퍼미션 조정
-      - name: Create SSH key file - pem 파일 생성
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > ./my.pem
-          chmod 600 ./my.pem
+        # pem 파일을 bsse64로 인코딩하여 GitHub Secrets에 저장
+        # EC2 서버의 host, user 정보 GitHub Secrets에 저장
+        # 맥: base64 -i ~/Taehyun/dev/workspace_school/aws/web-key.pem -o a.txt
+        # pem 파일은 깃허브상 리눅스에 파일 생성 -> EC2 서버에 접속할 때 사용
+        # 키를 디코딩 하여 리눅스상 현재 위치에 생성, 퍼미션 조정
+        - name: Create SSH key file - pem 파일 생성
+          run: |
+            echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > ./ec2_key.pem
+            chmod 600 ./ec2_key.pem
 
-
+        # github상 리눅스에 위치한 소스 -> EC2 서버에 배포
+        - name: Deploy to EC2 instance - EC2 서버에 배포
+          run: |
+            scp -o StrictHostKeyChecking=no -i ./ec2_key.pem -r . ${{secrets.ec2-user}}@${{ secrets.EC2_PUBLIC_IP }}:~/app
 
 
 
